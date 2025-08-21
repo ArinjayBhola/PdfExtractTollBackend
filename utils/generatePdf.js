@@ -116,7 +116,16 @@ export function generateStructuredPDF(data) {
             stack: [
               makeField("Hotel", data.structuredData["Hotel Name"]),
               makeField("Address", data.structuredData["Address"]),
-              makeField("Contact", data.structuredData["Contact"] || "+91-9836466860"),
+              makeField(
+                "Contact",
+                (() => {
+                  const phone = Array.isArray(data.structuredData["Contact"]?.Phone)
+                    ? data.structuredData["Contact"].Phone.join(", ")
+                    : data.structuredData["Contact"]?.Phone || "+91-9836466860";
+                  const email = data.structuredData["Contact"]?.Email;
+                  return email ? `${phone} | ${email}` : phone;
+                })(),
+              ),
             ],
           },
           {
@@ -131,7 +140,7 @@ export function generateStructuredPDF(data) {
       },
 
       { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }] },
-      makeField("Guest Name", data.structuredData["Guest Name"]),
+      makeField("Guest Name", data.structuredData["Guest Name"] || data.structuredData["Guest Name(s)"]),
       { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }], margin: [0, 10, 0, 10] },
 
       {
