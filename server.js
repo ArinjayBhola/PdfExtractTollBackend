@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { generateStructuredPDF } from "./utils/generatePdf.js";
 import cors from "cors";
 import dotenv from "dotenv";
+import fetch from "node-fetch";
 dotenv.config();
 
 const app = express();
@@ -65,6 +66,76 @@ This is an automated email and the inbox is not monitored. Kindly do not reply t
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: "Failed to send email." });
+  }
+});
+
+app.post("/extract", async (req, res) => {
+  const { rawText } = req.body;
+  const apiKey = process.env.VITE_GEMINI_API_KEY;
+  const prompt = `
+You are a data extraction engine.
+From the following hotel voucher text, extract exactly these fields:
+
+- Hotel Name
+Contact:
+  - Phone (include ANY phone numbers you find in the text, even if they appear under labels like "Agent Contact Number", "Service Operator Number", "Helpline Number", etc. Remove the labels; keep only the clean numbers.)
+  - Email
+- Hotel Confirmation
+- Address
+- Booking Date
+- Guest Name(s)
+- Child
+- Adults
+- Check in date
+- Check out date
+- Nights
+- Rooms
+- Room Category
+- Inclusions
+
+IMPORTANT:
+- The 'Inclusions' field should include ONLY:
+  - Meal-related items (e.g., 'Breakfast', 'Meal Plan - Breakfast', 'Half-board', 'All Meals')
+  - Rate-related identifiers (e.g., 'Make My Trip - On Line Retail Rate - RB')
+- Do **NOT** include:
+  - Room amenities (e.g., TV, Wi-Fi, Slippers, Minibar, Towels, Safe, etc.)
+  - Booking benefits (e.g., Free airport transfer, Spa sessions, Tours, etc.)
+- Do not hallucinate or infer information not clearly mentioned.
+- Extract data as accurately as possible, even if formatting is inconsistent.
+
+Return the result as a JSON object with each field clearly labeled. Do not add extra fields. Only extract these exact fields.
+
+
+PDF TEXT:
+${rawText}
+  `;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+        }),
+      },
+    );
+
+    const result = await response.json();
+    const textResponse = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!textResponse) throw new Error("Empty response from Gemini.");
+
+    const cleanedJson = textResponse
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    res.json(JSON.parse(cleanedJson));
+  } catch (err) {
+    console.error("Gemini Backend Error:", err);
+    res.status(500).json({ error: "Failed to extract structured data." });
   }
 });
 
