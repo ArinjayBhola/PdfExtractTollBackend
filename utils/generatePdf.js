@@ -157,7 +157,28 @@ export function generateStructuredPDF(data) {
             width: "50%",
             stack: [
               makeField("Child", data.structuredData["Child"]),
-              makeField("Nights", data.structuredData["Nights"]),
+              makeField(
+                "Nights",
+                (() => {
+                  const d = data.structuredData;
+                  const nightsProvided = d["Nights"];
+                  if (nightsProvided) return nightsProvided;
+
+                  const checkInRaw = d["Check in date"] || d["Check in"];
+                  const checkOutRaw = d["Check out date"] || d["Check out"];
+
+                  const checkIn = new Date(checkInRaw);
+                  const checkOut = new Date(checkOutRaw);
+
+                  if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime())) return "N/A";
+
+                  const diffTime = checkOut - checkIn;
+                  const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                  return nights > 0 ? nights : "N/A";
+                })(),
+              ),
+
               makeField("Check out", data.structuredData["Check out date"] || data.structuredData["Check in"]),
             ],
           },
