@@ -6,15 +6,15 @@ import dotenv from "dotenv";
 import fetch from "node-fetch";
 dotenv.config();
 
-const app = express();
-app.use(express.json());
 app.use(
   cors({
     origin: "*",
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type"],
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+app.options("*", cors());
 
 app.post("/send-pdf", async (req, res) => {
   try {
