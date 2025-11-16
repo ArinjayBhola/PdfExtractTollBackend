@@ -119,9 +119,8 @@ export function generateStructuredPDF(data) {
               makeField(
                 "Contact",
                 (() => {
-                  const phone = Array.isArray(data.structuredData["Contact"]?.Phone)
-                    ? data.structuredData["Contact"].Phone.join(", ")
-                    : data.structuredData["Contact"]?.Phone || "+91-9836466860";
+                  const phone =
+                    data.structuredData["Contact"] === "" ? "+91-9836466860" : data.structuredData["Contact"];
                   const email = data.structuredData["Contact"]?.Email;
                   return email ? `${phone} | ${email}` : phone;
                 })(),
