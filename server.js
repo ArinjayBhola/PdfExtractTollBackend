@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 import fetch from "node-fetch";
 dotenv.config();
 
+const app = express();
+
 app.use(
   cors({
     origin: "*",
