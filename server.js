@@ -7,8 +7,18 @@ import fetch from "node-fetch";
 dotenv.config();
 
 const app = express();
-
 app.use(express.json());
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  }),
+);
+
+app.get("/", (req, res) => {
+  res.send("Backend is running.");
+});
 
 app.post("/send-pdf", async (req, res) => {
   try {
