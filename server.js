@@ -7,14 +7,25 @@ import fetch from "node-fetch";
 dotenv.config();
 
 const app = express();
+
 app.use(express.json());
+
+// CORS setup
 app.use(
   cors({
     origin: "*",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   }),
 );
+
+// Explicit OPTIONS handler (this is what fixes your error)
+app.options("*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.sendStatus(200);
+});
 
 app.post("/send-pdf", async (req, res) => {
   try {
